@@ -294,6 +294,7 @@ def evaluate(
     # all responses for each (task, doc)
     process_res_queue = collections.defaultdict(list)
 
+    samples = {}
     # execute each type of request
     for reqtype, reqs in requests.items():
         # TODO: right now, this code runs multiple separate LM requests for multiple Requests differing
@@ -303,6 +304,14 @@ def evaluate(
 
         print("Running", reqtype, "requests")
         resps = getattr(lm, reqtype)([req.args for req in reqs])
+
+        samples[reqtype] = []
+        for i in range(len(reqs)):
+            samples[reqtype].append({
+                'args': reqs[i].args,
+                'resp': resps[i],
+            })
+
         resps = [
             x if req.index is None else x[req.index] for x, req in zip(resps, reqs)
         ]
@@ -343,6 +352,10 @@ def evaluate(
             if decontaminate and task_name in overlaps:
                 if doc_id not in overlaps[task_name]:
                     vals[(task_name, metric + decontaminate_suffix)].append(value)
+    
+    with open('./samples.json', 'w') as f:
+        import json
+        json.dump(samples, f, indent=4)
 
     # aggregate results
     for (task_name, metric), items in vals.items():
