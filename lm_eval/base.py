@@ -211,6 +211,7 @@ class BaseLM(LM):
 
     def loglikelihood(self, requests):
         new_reqs = []
+        seen = False
         for context, continuation in requests:
             if context == "":
                 # end of text as context
@@ -221,8 +222,14 @@ class BaseLM(LM):
                 context_enc, continuation_enc = self._encode_pair(context, continuation)
 
             new_reqs.append(((context, continuation), context_enc, continuation_enc))
+            if ''.join([context, continuation]) == 'The SWAT team moved in on the compound to prevent the terrorists from launching a deadly missile because the terrorists were trying to terrorize the global population.':
+                print(context_enc, continuation_enc)
+                seen = True
 
-        return self._loglikelihood_tokens(new_reqs)
+        ret = self._loglikelihood_tokens(new_reqs)
+        if seen:
+            print(ret)
+        return ret
 
     def loglikelihood_rolling(self, requests):
         # TODO: Implement caching once we've confirmed the perplexity implementation
